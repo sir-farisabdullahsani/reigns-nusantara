@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Reigns: Nusantara</title>
+
+<style>
+    *{
+        box-sizing:border-box;
+        margin:0;
+        padding:0;
+        font-family: 'Trebuchet MS', sans-serif;
+    }
+
+    body{
+        background:#0f172a;
+        color:white;
+        overflow:hidden;
+    }
+
+    .background{
+        position:fixed;
+        inset:0;
+        background:
+            linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,.7)),
+            url('https://images.unsplash.com/photo-1521295121783-8a321d551ad2?q=80&w=1600&auto=format&fit=crop');
+        background-size:cover;
+        background-position:center;
+        filter:saturate(.8);
+        z-index:-1;
+    }
+
+    .game-container{
+        width:100%;
+        max-width:1000px;
+        margin:auto;
+        height:100vh;
+        display:flex;
+        flex-direction:column;
+        padding:20px;
+    }
+
+    .topbar{
+        display:grid;
+        grid-template-columns: repeat(4,1fr);
+        gap:12px;
+        margin-bottom:20px;
+    }
+
+    .meter{
+        background:rgba(255,255,255,.08);
+        border:1px solid rgba(255,255,255,.1);
+        border-radius:16px;
+        padding:12px;
+        backdrop-filter: blur(8px);
+    }
+
+    .meter-title{
+        font-size:.85rem;
+        margin-bottom:8px;
+        opacity:.9;
+    }
+
+    .bar{
+        height:12px;
+        background:rgba(255,255,255,.15);
+        border-radius:20px;
+        overflow:hidden;
+    }
+
+    .fill{
+        height:100%;
+        border-radius:20px;
+        transition:0.3s;
+    }
+
+    .faith{ background:#10b981; }
+    .people{ background:#3b82f6; }
+    .military{ background:#ef4444; }
+    .treasury{ background:#f59e0b; }
+
+    .info{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:20px;
+        padding:10px 5px;
+    }
+
+    .card-area{
+        flex:1;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        position:relative;
+    }
+
+    .card{
+        width:90%;
+        max-width:600px;
+        min-height:420px;
+        background:rgba(20,20,20,.9);
+        border-radius:24px;
+        border:2px solid rgba(255,255,255,.1);
+        padding:30px;
+        position:absolute;
+        transition:0.2s ease;
+        box-shadow:0 20px 60px rgba(0,0,0,.5);
+        user-select:none;
+        cursor:grab;
+    }
+
+    .card h2{
+        margin-bottom:20px;
+        font-size:2rem;
+        color:#facc15;
+    }
+
+    .card p{
+        line-height:1.7;
+        font-size:1.1rem;
+        margin-bottom:20px;
+    }
+
+    .choice{
+        position:absolute;
+        top:50%;
+        transform:translateY(-50%);
+        font-size:1.2rem;
+        font-weight:bold;
+        opacity:0;
+        transition:0.2s;
+        width:220px;
+    }
+
+    .left-choice{
+        left:-220px;
+        color:#38bdf8;
+        text-align:right;
+    }
+
+    .right-choice{
+        right:-220px;
+        color:#f87171;
+        text-align:left;
+    }
+
+    .hint{
+        text-align:center;
+        margin-top:15px;
+        opacity:.7;
+        font-size:.95rem;
+    }
+
+    .game-over{
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.95);
+        display:none;
+        justify-content:center;
+        align-items:center;
+        flex-direction:column;
+        text-align:center;
+        padding:30px;
+        z-index:999;
+    }
+
+    .game-over h1{
+        font-size:4rem;
+        color:#ef4444;
+        margin-bottom:20px;
+    }
+
+    .game-over p{
+        max-width:700px;
+        line-height:1.8;
+        margin-bottom:30px;
+        font-size:1.2rem;
+    }
+
+    button{
+        padding:15px 25px;
+        border:none;
+        border-radius:14px;
+        background:#facc15;
+        font-size:1rem;
+        cursor:pointer;
+        font-weight:bold;
+    }
+
+    .phase{
+        padding:8px 16px;
+        background:rgba(255,255,255,.1);
+        border-radius:12px;
+    }
+
+</style>
+</head>
+
+<body>
+
+<div class="background"></div>
+
+<div class="game-container">
+
+    <div class="topbar">
+
+        <div class="meter">
+            <div class="meter-title">🕌 Islam & Adat</div>
+            <div class="bar">
+                <div class="fill faith" id="faithBar" style="width:50%"></div>
+            </div>
+        </div>
+
+        <div class="meter">
+            <div class="meter-title">👥 Rakyat</div>
+            <div class="bar">
+                <div class="fill people" id="peopleBar" style="width:50%"></div>
+            </div>
+        </div>
+
+        <div class="meter">
+            <div class="meter-title">⚔️ Daulat & Military</div>
+            <div class="bar">
+                <div class="fill military" id="militaryBar" style="width:50%"></div>
+            </div>
+        </div>
+
+        <div class="meter">
+            <div class="meter-title">💰 Treasury</div>
+            <div class="bar">
+                <div class="fill treasury" id="treasuryBar" style="width:50%"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="info">
+        <div id="year">Year: 1481</div>
+        <div class="phase" id="phaseText">🌸 Golden Age</div>
+    </div>
+
+    <div class="card-area">
+
+        <div class="card" id="card">
+            <div class="choice left-choice" id="leftChoice"></div>
+            <div class="choice right-choice" id="rightChoice"></div>
+
+            <h2 id="cardTitle"></h2>
+            <p id="cardText"></p>
+
+            <div class="hint">
+                Swipe / Drag Left or Right
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="game-over" id="gameOver">
+    <h1>THE FALL</h1>
+    <p id="gameOverText"></p>
+    <button onclick="restartGame()">Begin New Dynasty</button>
+</div>
+
+<script>
+
+const state = {
+    faith: 50,
+    people: 50,
+    military: 50,
+    treasury: 50,
+    year: 1481,
+    paranoia: 0,
+    defense: 0,
+    currentCard: 0
+};
+
+const cards = [
+
+{
+    title: "The Merchant Tariff",
+    text: "The Tamil-Muslim merchants demand lower taxes in exchange for exclusive spice routes from Maluku.",
+    left: {
+        text: "Reject them.",
+        effect: { treasury:-20, military:+10 }
+    },
+    right: {
+        text: "Grant exemption.",
+        effect: { treasury:+25, military:-15 }
+    }
+},
+
+{
+    title: "The Orang Minyak",
+    text: "A supernatural oily thief terrorizes the palace maidens.",
+    left: {
+        text: "Hire a Pawang.",
+        effect: { treasury:-10, faith:+15 }
+    },
+    right: {
+        text: "Increase the guards.",
+        effect: { military:+10, people:-10 }
+    }
+},
+
+{
+    title: "The White Crocodile",
+    text: "A mystical white crocodile blocks the river and frightens the villagers.",
+    left: {
+        text: "Offer yellow rice.",
+        effect: { people:+15, faith:-10 }
+    },
+    right: {
+        text: "Hunt the beast.",
+        effect: { people:-15, faith:+10 }
+    }
+},
+
+{
+    title: "The Jealous Courtier",
+    text: "A noble claims the Bendahara is plotting against you.",
+    left: {
+        text: "Investigate first.",
+        effect: { people:+10, military:-5 }
+    },
+    right: {
+        text: "Execute the family.",
+        effect: { military:+20, people:-20 }
+    }
+},
+
+{
+    title: "Portuguese Envoy",
+    text: "The foreigners request permission to build a fortified trading post.",
+    left: {
+        text: "Arrest them!",
+        effect: { military:+15, faith:+10, treasury:-10 }
+    },
+    right: {
+        text: "Allow controlled trade.",
+        effect: { treasury:+15, military:-10 }
+    }
+},
+
+{
+    title: "Monsoon Season",
+    text: "Violent waves damage merchant ships entering the harbor.",
+    left: {
+        text: "Fund emergency repairs.",
+        effect: { treasury:-15, people:+10 }
+    },
+    right: {
+        text: "Collect taxes anyway.",
+        effect: { treasury:+10, people:-15 }
+    }
+},
+
+{
+    title: "Keris Berdiri",
+    text: "A mystical Keris is discovered inside an abandoned shrine.",
+    left: {
+        text: "Seal it away.",
+        effect: { faith:+10, military:-5 }
+    },
+    right: {
+        text: "Claim its power.",
+        effect: { military:+15, faith:-10 }
+    }
+},
+
+{
+    title: "Orang Laut Chiefs",
+    text: "The sea nomads demand tribute to patrol the straits.",
+    left: {
+        text: "Pay them.",
+        effect: { treasury:-15, people:+20 }
+    },
+    right: {
+        text: "Refuse tribute.",
+        effect: { military:+10, people:-20 }
+    }
+}
+
+];
+
+const card = document.getElementById("card");
+
+let startX = 0;
+let currentX = 0;
+let dragging = false;
+
+function updateBars(){
+
+    document.getElementById("faithBar").style.width = state.faith + "%";
+    document.getElementById("peopleBar").style.width = state.people + "%";
+    document.getElementById("militaryBar").style.width = state.military + "%";
+    document.getElementById("treasuryBar").style.width = state.treasury + "%";
+
+    document.getElementById("year").innerText = "Year: " + state.year;
+
+    if(state.year < 1491){
+        document.getElementById("phaseText").innerText = "🌸 Golden Age";
+    }else if(state.year < 1501){
+        document.getElementById("phaseText").innerText = "🐍 The Serpent in the Court";
+    }else{
+        document.getElementById("phaseText").innerText = "⚓ The Black Ships";
+    }
+
+}
+
+function loadCard(){
+
+    const c = cards[state.currentCard % cards.length];
+
+    document.getElementById("cardTitle").innerText = c.title;
+    document.getElementById("cardText").innerText = c.text;
+    document.getElementById("leftChoice").innerText = c.left.text;
+    document.getElementById("rightChoice").innerText = c.right.text;
+
+}
+
+function applyEffect(effect){
+
+    state.faith += effect.faith || 0;
+    state.people += effect.people || 0;
+    state.military += effect.military || 0;
+    state.treasury += effect.treasury || 0;
+
+    clampStats();
+
+    state.year++;
+
+    if(state.year >= 1511){
+        finalBattle();
+        return;
+    }
+
+    state.currentCard++;
+
+    updateBars();
+    checkGameOver();
+    loadCard();
+}
+
+function clampStats(){
+
+    state.faith = Math.max(0, Math.min(100, state.faith));
+    state.people = Math.max(0, Math.min(100, state.people));
+    state.military = Math.max(0, Math.min(100, state.military));
+    state.treasury = Math.max(0, Math.min(100, state.treasury));
+
+}
+
+function checkGameOver(){
+
+    if(state.treasury <= 0){
+        endGame("Your unpaid Hulu-balang abandon the palace. Rival kingdoms sack your capital while you flee into the jungle.");
+    }
+
+    if(state.people <= 0){
+        endGame("The Orang Laut betray your harbor to the Lanun pirates. Melaka burns beneath the moonlight.");
+    }
+
+    if(state.faith >= 100){
+        endGame("The religious council strips you of power and locks you in isolation for a life of endless meditation.");
+    }
+
+    if(state.military >= 100){
+        endGame("Your generals seize the throne in a bloody palace coup.");
+    }
+
+}
+
+function finalBattle(){
+
+    if(
+        state.people > 50 &&
+        state.military > 50 &&
+        state.treasury > 50
+    ){
+        endGame(
+            "The Orang Laut burn the Portuguese fleet while your cannons thunder from the Kota walls. Melaka survives. You have achieved the TRUE ENDING: THE IRON SOVEREIGN."
+        );
+    }else{
+        endGame(
+            "The Portuguese breach the harbor defenses. Foreign merchants betray the city, and Melaka falls into history."
+        );
+    }
+
+}
+
+function endGame(text){
+
+    document.getElementById("gameOver").style.display = "flex";
+    document.getElementById("gameOverText").innerText = text;
+
+}
+
+function restartGame(){
+
+    location.reload();
+
+}
+
+card.addEventListener("mousedown", e=>{
+    dragging = true;
+    startX = e.clientX;
+});
+
+window.addEventListener("mousemove", e=>{
+
+    if(!dragging) return;
+
+    currentX = e.clientX - startX;
+
+    card.style.transform = `translateX(${currentX}px) rotate(${currentX/20}deg)`;
+
+    document.getElementById("leftChoice").style.opacity =
+        currentX < 0 ? Math.min(Math.abs(currentX)/100,1) : 0;
+
+    document.getElementById("rightChoice").style.opacity =
+        currentX > 0 ? Math.min(Math.abs(currentX)/100,1) : 0;
+
+});
+
+window.addEventListener("mouseup", ()=>{
+
+    if(!dragging) return;
+
+    dragging = false;
+
+    const current = cards[state.currentCard % cards.length];
+
+    if(currentX < -120){
+        applyEffect(current.left.effect);
+    }
+    else if(currentX > 120){
+        applyEffect(current.right.effect);
+    }
+
+    currentX = 0;
+
+    card.style.transform = "";
+    document.getElementById("leftChoice").style.opacity = 0;
+    document.getElementById("rightChoice").style.opacity = 0;
+
+});
+
+updateBars();
+loadCard();
+
+</script>
+
+</body>
+</html>
